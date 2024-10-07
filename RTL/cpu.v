@@ -18,10 +18,60 @@
 `define mul         5'b00100;
 
 
-module top():
-rmode
+module top();
+
 reg [31:0] IR; // Instruction Register
 
-reg [15:0] GPR [31:0] // General Purpose Register
+reg [15:0] GPR [31:0]; // General Purpose Register
+
+reg [15:0] SGPR;  // Special General Purpose Register to store MSB of 16 bit x 16 bit
+
+reg [31:0] mult_result;
+
+always@(*)begin
+    case(`oper_type)
+
+    `movsgpr:
+        begin
+            GPR[`rdst] = SGPR;
+        end
+
+    `mov:
+        begin
+            if(`imm_mode)
+                GPR[`rdst] = `isrc;
+            else
+                GPR[`rdst] = GPR[`rsrc1];
+        end
+
+    `add:
+        begin
+            if(`imm_mode)
+                GPR[`rdst] = GPR[`rsrc1] + `isrc;
+            else
+                GPR[`rdst] = GPR[`rsrc1] + GPR[`rsrc2];
+        end
+
+    `sub:
+        begin
+            if(`imm_mode)
+                GPR[`rdst] = GPR[`rsrc1] - `isrc;
+            else
+                GPR[`rdst] = GPR[`rsrc1] - GPR[`rsrc2];
+        end
+
+    `mul:
+        begin
+            if(`imm_mode)
+                mult_result = GPR[`rsrc1] * `isrc;
+            else
+                mult_result = GPR[`rsrc1] * GPR[`rsrc2];
+
+            GPR[`rdst] = mult_result[15:0];
+            SGPR = mult_result [31:16];
+        end
+
+    endcase
+end
 
 endmodule
